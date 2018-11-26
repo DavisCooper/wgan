@@ -63,11 +63,11 @@ class WassersteinGAN(object):
                 bz = self.z_sampler(batch_size, self.z_dim)
                 self.sess.run(self.d_clip)
                 _, summary_str, _ = self.sess.run([self.d_rmsprop,self.d_sum,self.d_loss], feed_dict={self.x: bx, self.z: bz})
-                self.writer.add_summary(summary_str, counter)
+                self.writer.add_summary(summary_str, t)
 
             bz = self.z_sampler(batch_size, self.z_dim)
             _, summary_str, _ = self.sess.run([self.g_rmsprop,self.g_sum,self.g_loss], feed_dict={self.z: bz, self.x: bx})
-            self.writer.add_summary(summary_str, counter)
+            self.writer.add_summary(summary_str, t)
 
             if t % 100 == 0:
                 bx = self.x_sampler(batch_size)

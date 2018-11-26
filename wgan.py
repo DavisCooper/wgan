@@ -29,6 +29,9 @@ class WassersteinGAN(object):
         self.g_loss = tf.reduce_mean(self.d_)
         self.d_loss = tf.reduce_mean(self.d) - tf.reduce_mean(self.d_)
 
+        self.d_sum = tf.summary.scalar("d_loss", self.d_loss)
+        self.g_sum = tf.summary.scalar("g_loss", self.g_loss)
+
         self.reg = tc.layers.apply_regularization(
             tc.layers.l1_regularizer(2.5e-5),
             weights_list=[var for var in tf.global_variables() if 'weights' in var.name]
@@ -49,6 +52,7 @@ class WassersteinGAN(object):
         plt.ion()
         self.sess.run(tf.global_variables_initializer())
         start_time = time.time()
+        self.writer = tf.summary.FileWriter('logs/{}/{}'.format(self.data, str(start_time)),self.sess.graph)
         for t in range(0, num_batches):
             d_iters = 5
             if t % 500 == 0 or t < 25:
@@ -58,10 +62,12 @@ class WassersteinGAN(object):
                 bx = self.x_sampler(batch_size)
                 bz = self.z_sampler(batch_size, self.z_dim)
                 self.sess.run(self.d_clip)
-                self.sess.run(self.d_rmsprop, feed_dict={self.x: bx, self.z: bz})
+                _, summary_str, _ = self.sess.run([self.d_rmsprop,self.d_sum,self.d_loss], feed_dict={self.x: bx, self.z: bz})
+                self.writer.add_summary(summary_str, counter)
 
             bz = self.z_sampler(batch_size, self.z_dim)
-            self.sess.run(self.g_rmsprop, feed_dict={self.z: bz, self.x: bx})
+            _, summary_str, _ = self.sess.run([self.g_rmsprop,self.g_sum,self.g_loss], feed_dict={self.z: bz, self.x: bx})
+            self.writer.add_summary(summary_str, counter)
 
             if t % 100 == 0:
                 bx = self.x_sampler(batch_size)
